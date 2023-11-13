@@ -9,7 +9,6 @@
 #include "file.h"
 #include "utils.h"
 
-#define FILENAME "bd.txt"
 int main(int argc, char** argv)
 {
 
