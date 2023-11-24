@@ -6,7 +6,7 @@
 #include <netinet/in.h>
 #include <sys/types.h>
 
-#define MAX_ANSWER_SIZE 512
+#define MAX_ANSWER_SIZE 1024
 
  
 int Socket(int domain, int type, int protocol);

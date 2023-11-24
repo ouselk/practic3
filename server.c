@@ -16,29 +16,37 @@
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 void *clientHandler(void *socket_desc)
 {
+  // отслеживаем номер подключения для логов,
+  // так как номер - общий для потоков ресурс,
+  // используем мьютексы
   static int CONNECTION_NUM = 0;
   pthread_mutex_lock(&mutex);
   CONNECTION_NUM++;
   pthread_mutex_unlock(&mutex);
   int connection_num = CONNECTION_NUM;
+
   printf("New connection №%d\n", connection_num);
+
   int fd = *(int*)socket_desc;
   while (1)
   {
     char command[MAX_REQUEST_BYTES] = {'\0'};
+    //считываем отправленные клиентом данные в строку command
     ssize_t nread = read(fd, command, MAX_REQUEST_BYTES);
     if (nread == -1)
     {
-      perror("read error");
+      perror("Read error");
       break;
     }
     if (nread == 0)
     {
-      printf("End of file");
+      printf("End of file\n");
       break;
     }
     printf("User data of connection№%d: %s\n", connection_num, command);
 
+    // раскладываем отправленное пользователем на аргументы для
+    // функции bdhandler
     int argc = 0;
     char* nameofprogram = strtok(command, " ");
     if (nameofprogram)
@@ -83,35 +91,44 @@ void *clientHandler(void *socket_desc)
     if (argc>7)
       argv[7] = secondarg;
 
-    char answer[MAX_ANSWER_SIZE] = {'\0'};
-    if (strcmp(query, "STOP") == 0)
+    if (query && strcmp(query, "STOP") == 0)
     {
       write(fd, "STOP", 4);
       break;
     }
-    
+    // в ответ пишем возвращенную из функции bdHandler строку,
+    // так как функция работает с файлом - общим для потоков ресурсом,
+    // используем мьютексы.
     pthread_mutex_lock(&mutex);
-    write(fd, bdHandler(argc, argv), MAX_ANSWER_SIZE);
+//    char* answer =  bdHandler(argc, argv);
+    write(fd,bdHandler(argc, argv), MAX_ANSWER_SIZE);
+    //free(answer);
     pthread_mutex_unlock(&mutex);
   } 
+
+  //закрываем сокет подключения и освобождаем память,
+  //закрываем поток.
+  close(fd);
   free(socket_desc);
   printf("Connection №%d processed succefuly, closed.\n", connection_num);
   pthread_exit(NULL);
-
 }
 
 int main()
 {
-  int socket = Socket(AF_INET, SOCK_STREAM, 0);
+  int socket = Socket(AF_INET, SOCK_STREAM, 0);//tcp/ip сокет
 
   struct sockaddr_in name = {0};
-  name.sin_family = AF_INET;
-  name.sin_port = htons (PORT);
-  name.sin_addr.s_addr = INADDR_ANY;
+  name.sin_family = AF_INET; // семейство ipv4
+  name.sin_port = htons (PORT); //устанавливаем порт, преобразуя его в порядок байтов для tcp/ip
+  name.sin_addr.s_addr = INADDR_ANY; //указываем все доступные интерфейсы
   socklen_t addrlen = sizeof name;
-  Bind(socket, (struct sockaddr *) &name, sizeof (name));
-  Listen(socket, 5);
-  int fd;
+  Bind(socket, (struct sockaddr *) &name, sizeof (name)); //привязываем сокет к имени
+  Listen(socket, 5);  //прослушиваем сокет (максимальная очередь клиентов - 5)
+  int fd = 0;
+  // в цикле постоянно запрашиваем дескриптор для нового подключения,
+  // когда оно происходит, отправляем дескриптор в функцию clientHandler
+  // в новом потоке.
   while ((fd =  Accept(socket, (struct sockaddr* ) &name, &addrlen)))
   {
     pthread_t thread = 0;

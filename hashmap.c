@@ -81,7 +81,7 @@ void hashmapDelete(HashElem** map, char* key)
             {
                 map[index] = currentElem->overflow_bucket;
             }
-         //   free(currentElem->key);
+       //     free(currentElem->key);
             free(currentElem);
             return;
         }

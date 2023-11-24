@@ -6,7 +6,8 @@
 #include <unistd.h>
 #include "socket.h"
 
-
+//Функции обертки, обрабатывающие ошибку при вызове
+//оригинальной функции.
 int Socket(int domain, int type, int protocol)
 {
   int sock = -1;

@@ -7,11 +7,5 @@ typedef struct Node
 	struct Node* next;
 } Node;
 
-typedef struct ExNode
-{
-	char* data;
-	struct ExNode* next;
-    struct ExNode* previous;
-} ExNode;
 
 #endif

@@ -22,6 +22,7 @@ char* bdHandler(int argc, char** argv)
 
     char* filename = argv[2];
 
+    printf("%s", filename);
     if (fileCheck(filename) != 0)
     {
         return "Open file error.";
@@ -314,6 +315,22 @@ char* bdHandler(int argc, char** argv)
         else
             snprintf(str, MAX_ANSWER_SIZE, "%s is not member of hashmap %s.\n", firstarg, structname);
         return str;
+    }
+    else if (strcmp(command, "STALL") == 0)
+    {
+        if (argc<=5)
+            return "Incorrect query";
+        char* strstruct = readStructure(filename, structname, &typeOfStruct);
+        if (strstruct == NULL)
+            return "Struct no exists";
+        strcat(typeOfStruct, " ");
+        strcat(typeOfStruct, structname);
+        strcat(typeOfStruct, " ");
+        strcat(typeOfStruct, strstruct);
+        writeIntoEndOfFile(filename, typeOfStruct);
+        printf("STALL: %s\n", strstruct);
+        free(typeOfStruct);
+        return strstruct;
     }
     else
         return "No exists such command.";
